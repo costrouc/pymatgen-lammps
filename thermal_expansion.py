@@ -3,11 +3,12 @@ import subprocess
 
 import numpy as np
 
-from mgo import mgo_potential_settings, lammps_potentials, supercell, structure
+from mgo import mgo_potential_settings, lammps_potentials, structure
 from lammps import LammpsRun, LammpsData, NPTSet
 
-temperatures = np.linspace(1e-3, 4000.0, 400)
-directory = 'runs/thermal_expansion'
+supercell = (10, 10, 10)
+temperatures = np.linspace(300.0, 4000.0, 4)
+directory = 'runs/thermal_expansion_test1'
 
 
 previous_structure = None
@@ -23,7 +24,7 @@ for temp in temperatures:
                                             potentials=lammps_potentials,
                                             include_charge=True)
     lammps_input = NPTSet(lammps_data,
-                           temp_start=temp, temp_damp=10.0, press_damp=100.0,
+                           temp_start=temp, temp_damp=1.0, press_damp=10.0,
                            user_lammps_settings=[
                                ('run', 100000),
                                ('dump', 'DUMP all custom 10000 mol.lammpstrj id type x y z vx vy vz mol'),
@@ -34,7 +35,7 @@ for temp in temperatures:
     lammps_input.write_input(temp_directory)
 
     print('Running Lammps Calculation', temp)
-    subprocess.call(['mpirun', '-n', '2', 'lammps', '-i', 'lammps.in'], cwd=temp_directory, stdout=subprocess.PIPE)
+    subprocess.call(['mpirun', '-n', '2', 'lammps', '-i', 'lammps.in'], cwd=temp_directory) #, stdout=subprocess.PIPE)
     print('Getting final structure', temp)
     lammps_run = LammpsRun(
         os.path.join(temp_directory, 'in.data'),
