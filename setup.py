@@ -9,7 +9,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='lammps_wrapper',
+    name='lammps',
     version='0.0.1',
     description='Lammps Wrapper',
     long_description=long_description,
