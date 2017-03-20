@@ -20,7 +20,7 @@ setup(
         'Programming Language :: Python :: 3.5',
     ],
     keywords='lammps wrapper',
-    packages=find_packages(exclude=['docs', 'tests']),
+    packages=find_packages(exclude=['docs', 'tests', 'notebooks']),
     install_requires=[
         'pymatgen',
     ],
