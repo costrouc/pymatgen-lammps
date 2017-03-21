@@ -250,7 +250,6 @@ class LammpsData:
         for s1, s2, *parameters in sections['PairIJ Coeffs']['data']:
             pair_potentials[(index_symbols[s1], index_symbols[s2])] = ' '.join(list(map(str, parameters)))
 
-        print(pair_potentials)
         potentials = LammpsPotentials(pair_potentials, symbol_indicies)
 
         return cls(description, symbol_indicies, masses, atoms, lammps_box,

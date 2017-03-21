@@ -34,7 +34,12 @@ class LammpsRun(object):
         lammps_box = LammpsBox(**timestep['box'])
         species = self._atom_index
         positions = timestep['atoms'][['x', 'y', 'z']].view(np.float).reshape(-1, 3)
-        return Structure(lammps_box.lattice, species, positions, coords_are_cartesian=True)
+
+        site_properties = {}
+        if all(p in timestep['atoms'].dtype.names for p in ['vx', 'vy', 'vz']):
+            site_properties['velocities'] = (timestep['atoms'][['vx', 'vy', 'vz']].view(np.float).reshape(-1, 3)).tolist()
+
+        return Structure(lammps_box.lattice, species, positions, coords_are_cartesian=True, site_properties=site_properties)
 
     def get_forces(self, index):
         if self.lammps_dump is None:
