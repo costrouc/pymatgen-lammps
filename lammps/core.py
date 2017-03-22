@@ -41,6 +41,14 @@ class LammpsBox:
         gamma = math.degrees(math.acos(xy / b))
         return Lattice.from_parameters(a, b, c, alpha, beta, gamma)
 
+    def as_dict(self):
+        return {
+            'xlo': self.xlo, 'xhi': self.xhi,
+            'ylo': self.ylo, 'yhi': self.yhi,
+            'zlo': self.zlo, 'zhi': self.zhi,
+            'xy': self.xy, 'xz': self.xz, 'yz': self.yz
+        }
+
     def __str__(self):
         return (
             '{} {} xlo xhi\n'
@@ -68,7 +76,13 @@ class LammpsPotentials:
                     symbol_indicies[s2] = counter
                     counter += 1
 
+        # Dumb enforcement that i < j
+        def ordered_atom_type(a1_type, a2_type):
+            if a1_type < a2_type:
+                return "{} {}".format(a1_type, a2_type)
+            return "{} {}".format(a2_type, a1_type)
+
         return '\n'.join([
             'PairIJ Coeffs\n',
-            '\n'.join(['{} {} {}'.format(symbol_indicies[s1], symbol_indicies[s2], parameters) for (s1, s2), parameters in self.pair_parameters.items()]),
+            '\n'.join(['{} {}'.format(ordered_atom_type(symbol_indicies[s1], symbol_indicies[s2]), parameters) for (s1, s2), parameters in self.pair_parameters.items()]),
         ])

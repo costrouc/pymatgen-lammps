@@ -16,6 +16,8 @@
     "dihedral_style": "charmm",
     "improper_style": "cvff",
     "read_data": "data.lammps",
+    "region": [],
+    "group": [],
     "neighbor": "2.0 bin",
     "neigh_modify": "delay 0 every 1 check yes page 1000000 one 20000",
     "timestep": 0.001,
