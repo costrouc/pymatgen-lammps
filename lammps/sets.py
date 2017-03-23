@@ -3,6 +3,7 @@ import json
 import random
 
 from .inputs import LammpsInput, LammpsScript
+from .utils import structure_to_neb_input
 
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -16,10 +17,29 @@ class LammpsSet(LammpsInput):
 
 
 class RelaxSet(LammpsSet):
-    def __init__(self, lammps_data, user_lammps_settings=None, **kwargs):
+    def __init__(self, lammps_data, relax_box=True, user_lammps_settings=None, **kwargs):
+        super().__init__('relax', lammps_data, **kwargs)
+        if not relax_box:
+            self.lammps_script.update(('fix', []))
+        if user_lammps_settings:
+            self.lammps_script.update(user_lammps_settings)
+
+
+class NEBSet(LammpSet):
+    def __init__(self, lammps_data, final_structure, user_lammps_settings=None, **kwargs):
         super().__init__('relax', lammps_data, **kwargs)
         if user_lammps_settings:
             self.lammps_script.update(user_lammps_settings)
+        self.final_structure = final_structure
+
+    def write_input(self, output_dir, input_filename="lammps.in", make_dir=True):
+        super().write_input(output_dir=output_dir, input_filename=input_filename,
+                            make_dir=make_dir)
+
+        # Write final structure for NEB calculation (uses linear interpolation)
+        # TODO: Works for now
+        with open(os.path.join(output_dir, 'final.coords')) as f:
+            f.write(structure_to_neb_input(structure))
 
 
 class NVESet(LammpsSet):

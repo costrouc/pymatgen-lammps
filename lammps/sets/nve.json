@@ -15,7 +15,7 @@
     "angle_style": "harmonic",
     "dihedral_style": "charmm",
     "improper_style": "cvff",
-    "read_data": "data.lammps",
+    "read_data": "initial.data",
     "region": [],
     "group": [],
     "neighbor": "2.0 bin",
@@ -29,8 +29,8 @@
     "thermo_style": "custom step vol temp press ke pe etotal enthalpy evdwl ecoul epair ebond eangle edihed eimp emol elong etail lx ly lz xy xz yz pxy pxz pyz pxx pyy pzz density",
     "thermo": 1000,
     "fix": "1 all nve",
-    "restart": "5000 restart.mol.1 restart.mol.2",
+    "restart": "5000 current.restart",
     "run": 10000,
-    "write_restart": "restart.mol",
-    "write_data": "restart.data"
+    "write_restart": "final.restart",
+    "write_data": "final.data"
 }

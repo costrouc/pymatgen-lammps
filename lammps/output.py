@@ -158,7 +158,7 @@ class LammpsLog(object):
     Parser for LAMMPS log file.
     """
 
-    def __init__(self, log_file="log.lammps"):
+    def __init__(self, log_file="lammps.log"):
         """
         Args:
             log_file (string): path to the loag file
