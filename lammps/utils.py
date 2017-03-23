@@ -32,3 +32,10 @@ def plane_from_miller_index(lattice, miller_index):
     normal = np.cross(vectors[0], vectors[1])
     normal = normal / np.linalg.norm(normal)
     return point, normal
+
+
+def structure_to_neb_input(structure):
+    return '\n'.join([
+        '{}'.format(len(structure)),
+        '\n'.join(['{} {} {} {}'.format(i+1, *site.coords) for i, site in enumerate(structure)])
+    ])
