@@ -1,0 +1,25 @@
+{
+    "log": "lammps.log",
+    "units": "metal",
+    "dimension": 3,
+    "boundary": "p p p",
+    "atom_style": "full",
+    "pair_style": "lj/cut/coul/long 12",
+    "kspace_style": "pppm 0.0001",
+    "pair_modify": [
+        "tail yes",
+        "mix arithmetic"
+    ],
+    "special_bonds": "amber",
+    "bond_style": "harmonic",
+    "angle_style": "harmonic",
+    "dihedral_style": "charmm",
+    "improper_style": "cvff",
+    "read_data": "initial.data",
+    "region": [],
+    "group": [],
+    "dump": "DUMP all custom 1 mol.lammpstrj id type x y z fx fy fz mol",
+    "thermo_style": "custom step vol temp press ke pe etotal enthalpy evdwl ecoul epair ebond eangle edihed eimp emol elong etail lx ly lz xy xz yz pxy pxz pyz pxx pyy pzz density",
+    "thermo": 1,
+    "run": 0
+}

@@ -1,4 +1,4 @@
-# NEB Calculation in Lammps
+# Calculation of NEB Barrier of vacancy migration energy
 import subprocess
 
 from pymatgen import Structure, Lattice, Specie

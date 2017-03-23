@@ -44,34 +44,12 @@ class LammpsRun(object):
     def get_forces(self, index):
         if self.lammps_dump is None:
             raise ValueError('Requires lammps dump to get forces in md simulation')
-
-        timestep = self.lammps_dump.trajectories[index]
-        if any(p not in timestep['atoms'].dtype.names for p in ['fx', 'fy', 'fz']):
-            raise ValueError('Atom dumps must include fx fy fz to get forces')
-
-        timestep = self.lammps_dump.trajectories[index]
-        return timestep['atoms'][['fx', 'fy', 'fz']].view(np.float).reshape(-1, 3)
+        return self.lammps_dump.get_forces(index)
 
     def get_stress(self, index):
         if self.lammps_log is None:
             raise ValueError('Requires lammps log to get stress in md simulation')
-
-        timestep = self.lammps_log.thermo_data[-1]
-        if any(p not in timestep.dtype.names for p in ['pxy', 'pxz', 'pyz', 'pxx', 'pyy', 'pzz']):
-            raise ValueError('Atom dumps must include pxy, pxz, pyz, pxx, pyy, pzz to get forces')
-
-        pxx = timestep['pxx']
-        pyy = timestep['pyy']
-        pzz = timestep['pzz']
-        pxy = timestep['pxy']
-        pxz = timestep['pxz']
-        pyz = timestep['pyz']
-
-        return np.array([
-            [pxx, pxy, pxz],
-            [pxy, pyy, pyz],
-            [pxz, pyz, pzz]
-        ])
+        return self.lammps_log.get_stress(index)
 
     @property
     def final_structure(self):
@@ -102,6 +80,13 @@ class LammpsDump(object):
     @property
     def timesteps(self):
         return np.array([t['timestep'] for t in self.trajectories])
+
+    def get_forces(self, index):
+        timestep = self.trajectories[index]
+        if any(p not in timestep['atoms'].dtype.names for p in ['fx', 'fy', 'fz']):
+            raise ValueError('Atom dumps must include fx fy fz to get forces')
+
+        return timestep['atoms'][['fx', 'fy', 'fz']].view(np.float).reshape(-1, 3)
 
     def _parse_dump(self):
         """
@@ -169,6 +154,24 @@ class LammpsLog(object):
     @property
     def timesteps(self):
         return self.thermo_data['step'].view(np.float)
+
+    def get_stress(self, index):
+        timestep = self.thermo_data[-1]
+        if any(p not in timestep.dtype.names for p in ['pxy', 'pxz', 'pyz', 'pxx', 'pyy', 'pzz']):
+            raise ValueError('Atom dumps must include pxy, pxz, pyz, pxx, pyy, pzz to get forces')
+
+        pxx = timestep['pxx']
+        pyy = timestep['pyy']
+        pzz = timestep['pzz']
+        pxy = timestep['pxy']
+        pxz = timestep['pxz']
+        pyz = timestep['pyz']
+
+        return np.array([
+            [pxx, pxy, pxz],
+            [pxy, pyy, pyz],
+            [pxz, pyz, pzz]
+        ])
 
     def _parse_log(self):
         """

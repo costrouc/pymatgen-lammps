@@ -84,6 +84,8 @@ class LammpsData:
         masses = {}
         atoms = []
         velocities = None
+        if include_velocities:
+            velocities = []
         counter = 1
         for atom in structure:
             if atom.specie not in symbol_indicies:

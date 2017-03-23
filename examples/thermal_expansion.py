@@ -1,3 +1,4 @@
+# Calculate the lattice constant at many temperatures (Thermal Expansion)
 import os
 import subprocess
 

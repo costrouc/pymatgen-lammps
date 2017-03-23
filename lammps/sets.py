@@ -16,11 +16,18 @@ class LammpsSet(LammpsInput):
         super().__init__(lammps_script, lammps_data)
 
 
+class StaticSet(LammpsSet):
+    def __init__(self, lammps_data, user_lammps_settings=None, **kwargs):
+        super().__init__('static', lammps_data, **kwargs)
+        if user_lammps_settings:
+            self.lammps_script.update(user_lammps_settings)
+
+
 class RelaxSet(LammpsSet):
     def __init__(self, lammps_data, relax_box=True, user_lammps_settings=None, **kwargs):
         super().__init__('relax', lammps_data, **kwargs)
         if not relax_box:
-            self.lammps_script.update(('fix', []))
+            self.lammps_script.update([('fix', [])])
         if user_lammps_settings:
             self.lammps_script.update(user_lammps_settings)
 
@@ -85,5 +92,18 @@ class NPTSet(NVESet):
         self.lammps_script['velocity'][0] = 'all create {:.3f} {} units box'.format(temp_start, random.randint(0, 10000000))
         self.lammps_script['fix'] = '1 all npt temp {:.3f} {:.3f} {:.3f} iso {:.3f} {:.3f} {:.3f}'.format(
             temp_start, temp_end, temp_damp, press_start, press_end, press_damp)
+        if user_lammps_settings:
+            self.lammps_script.update(user_lammps_settings)
+
+
+class NPHSet(NVESet):
+    def __init__(self, lammps_data,
+                 press_start=0.0, press_end=None, press_damp=1000.0,
+                 user_lammps_settings=None, **kwargs):
+        super().__init__(lammps_data, **kwargs)
+        temp_end = temp_end or temp_start
+        press_end = press_end or press_start
+        self.lammps_script['velocity'][0] = 'all create {:.3f} {} units box'.format(temp_start, random.randint(0, 10000000))
+        self.lammps_script['fix'] = '1 all nph iso {:.3f} {:.3f} {:.3f}'.format(press_start, press_end, press_damp)
         if user_lammps_settings:
             self.lammps_script.update(user_lammps_settings)

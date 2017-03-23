@@ -1,3 +1,4 @@
+# Calculation the Melting Point using the solid-liquid coexistence method
 import random
 import os
 import subprocess
@@ -7,7 +8,7 @@ from pymatgen.core import Specie, Structure, Lattice
 import numpy as np
 
 from lammps.utils import plane_from_miller_index
-from lammps import LammpsData, LammpsRun, LammpsPotentials, NPTSet, NVESet, LammpsBox
+from lammps import LammpsData, LammpsRun, LammpsPotentials, NPTSet, NVESet, NPHSet, LammpsBox
 
 def distance_from_miller_index(site, miller_index):
     point, normal = plane_from_miller_index(site.lattice, miller_index)
@@ -131,7 +132,7 @@ print('============== STEP D =============')
 step_d_directory = os.path.join(directory, 'step_d')
 
 lammps_data = LammpsData.from_structure(step_c_final_dump.structure, potentials=lammps_potentials, include_charge=True, include_velocities=True)
-lammps_set = NVESet(lammps_data,
+lammps_set = NPHSet(lammps_data,
                     user_lammps_settings=[
                         ('fix', '1 all nph x 0.0 0.0 1000.0'),
                         ('run', steps['d']),
