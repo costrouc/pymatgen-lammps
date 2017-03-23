@@ -20,6 +20,8 @@ supercell = np.array([5, 5, 5], dtype=np.int)
 # Inital Guess 3150
 # Iter 1: 3010 K
 melting_point_guess = 3010 # Kelvin
+processors = '4'
+lammps_command = 'lmp_mpi'
 
 
 a = 4.1990858 # From evaluation of potential
@@ -54,9 +56,9 @@ steps = {
 }
 
 
-# =============== Step A ==============
-# NPT raise solid phase to estimated melting point
 print('============== STEP A =============')
+# NPT raise solid phase to estimated melting point
+
 step_a_directory = os.path.join(directory, 'step_a')
 lammps_data = LammpsData.from_structure(sorted_structure, potentials=lammps_potentials, include_charge=True)
 lammps_set = NPTSet(lammps_data,
@@ -65,16 +67,15 @@ lammps_set = NPTSet(lammps_data,
                         ('run', steps['a']),
                         ('dump', 'DUMP all custom 10000 mol.lammpstrj id type x y z vx vy vz mol'),
                         ('thermo', 100),
-                        ('write_data', 'restart.data pair ij')
                     ] + mgo_potential_settings)
 lammps_set.write_input(step_a_directory)
-subprocess.call(['mpirun', '-n', '4', 'lammps', '-i', 'lammps.in'], cwd=step_a_directory)
-step_a_final_dump = LammpsData.from_file(os.path.join(step_a_directory, 'restart.data'))
+subprocess.call(['mpirun', '-n', processors, lammps_command, '-i', 'lammps.in'], cwd=step_a_directory)
+step_a_final_dump = LammpsData.from_file(os.path.join(step_a_directory, 'final.data'))
 
 
-# ============ Step B ==============
-# NVT Fix solid atoms, melt liquid atoms 2x melting point
 print('============== STEP B =============')
+# NVT Fix solid atoms, melt liquid atoms 2x melting point
+
 step_b_directory = os.path.join(directory, 'step_b')
 lammps_data = LammpsData.from_structure(step_a_final_dump.structure, potentials=lammps_potentials, include_charge=True, include_velocities=True)
 lammps_set = NVESet(lammps_data,
@@ -92,17 +93,15 @@ lammps_set = NVESet(lammps_data,
                         ('run', steps['b']),
                         ('dump', 'DUMP all custom 10000 mol.lammpstrj id type x y z vx vy vz mol'),
                         ('thermo', 100),
-                        ('write_data', 'restart.data pair ij')
                     ] + mgo_potential_settings)
 lammps_set.write_input(step_b_directory)
-subprocess.call(['mpirun', '-n', '4', 'lammps', '-i', 'lammps.in'], cwd=step_b_directory)
-step_b_final_dump = LammpsData.from_file(os.path.join(step_b_directory, 'restart.data'))
+subprocess.call(['mpirun', '-n', processors, lammps_command, '-i', 'lammps.in'], cwd=step_b_directory)
+step_b_final_dump = LammpsData.from_file(os.path.join(step_b_directory, 'final.data'))
 
 
-# ============= Step C ============
+print('============== STEP C =============')
 # NPT Fix solid atoms, cool liquid atoms to estimated melting point
 # only allow expansion in x axis
-print('============== STEP C =============')
 step_c_directory = os.path.join(directory, 'step_c')
 lammps_data = LammpsData.from_structure(step_b_final_dump.structure, potentials=lammps_potentials, include_charge=True, include_velocities=True)
 lammps_set = NVESet(lammps_data,
@@ -120,16 +119,15 @@ lammps_set = NVESet(lammps_data,
                         ('run', steps['c']),
                         ('dump', 'DUMP all custom 10000 mol.lammpstrj id type x y z vx vy vz mol'),
                         ('thermo', 100),
-                        ('write_data', 'restart.data pair ij')
                     ] + mgo_potential_settings)
 lammps_set.write_input(step_c_directory)
 subprocess.call(['mpirun', '-n', '4', 'lammps', '-i', 'lammps.in'], cwd=step_c_directory)
-step_c_final_dump = LammpsData.from_file(os.path.join(step_c_directory, 'restart.data'))
+step_c_final_dump = LammpsData.from_file(os.path.join(step_c_directory, 'final.data'))
 
 
-# ============= Step D ============
-# NPH Allow to equilibrium temperature
 print('============== STEP D =============')
+# NPH Allow to equilibrium temperature
+
 step_d_directory = os.path.join(directory, 'step_d')
 
 lammps_data = LammpsData.from_structure(step_c_final_dump.structure, potentials=lammps_potentials, include_charge=True, include_velocities=True)
@@ -139,8 +137,7 @@ lammps_set = NVESet(lammps_data,
                         ('run', steps['d']),
                         ('dump', 'DUMP all custom 10000 mol.lammpstrj id type x y z vx vy vz mol'),
                         ('thermo', 100),
-                        ('write_data', 'restart.data pair ij')
                     ] + mgo_potential_settings)
 lammps_set.write_input(step_d_directory)
-subprocess.call(['mpirun', '-n', '4', 'lammps', '-i', 'lammps.in'], cwd=step_d_directory)
-step_d_final_dump = LammpsData.from_file(os.path.join(step_d_directory, 'restart.data'))
+subprocess.call(['mpirun', '-n', processors, lammps_command, '-i', 'lammps.in'], cwd=step_d_directory)
+step_d_final_dump = LammpsData.from_file(os.path.join(step_d_directory, 'final.data'))

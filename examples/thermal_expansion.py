@@ -2,13 +2,40 @@ import os
 import subprocess
 
 import numpy as np
+from pymatgen import Structure, Lattice, Specie
 
-from mgo import mgo_potential_settings, lammps_potentials, structure
-from lammps import LammpsRun, LammpsData, NPTSet
+from lammps import LammpsData, NPTSet, LammpsPotentials
 
-supercell = (10, 10, 10)
+supercell = (5, 5, 5)
+a = 4.1990858 # From evaluation of potential
+lattice = Lattice.from_parameters(a, a, a, 90, 90, 90)
+mg = Specie('Mg', 1.4)
+o = Specie('O', -1.4)
+atoms = [mg, o]
+sites = [[0, 0, 0], [0.5, 0.5, 0.5]]
+structure = Structure.from_spacegroup(225, lattice, atoms, sites)
+
+
 temperatures = np.linspace(300.0, 4000.0, 4)
-directory = 'runs/thermal_expansion_test1'
+directory = 'runs/thermal_expansion'
+processors = '4'
+lammps_command = 'lmp_mpi'
+
+
+lammps_potentials = LammpsPotentials(pair={
+    (mg, mg): '1309362.2766468062  0.104    0.0',
+    (mg, o ): '9892.357            0.20199  0.0',
+    (o , o ): '2145.7345           0.3      30.2222'
+})
+
+lammps_data = LammpsData.from_structure(
+    structure * supercell,
+    potentials=lammps_potentials, include_charge=True)
+
+mgo_potential_settings = [
+    ('pair_style', 'buck/coul/long 10.0'),
+    ('kspace_style', 'pppm 1.0e-5'),
+]
 
 
 previous_structure = None
@@ -26,20 +53,16 @@ for temp in temperatures:
     lammps_input = NPTSet(lammps_data,
                            temp_start=temp, temp_damp=1.0, press_damp=10.0,
                            user_lammps_settings=[
-                               ('run', 100000),
+                               ('run', 10000),
                                ('dump', 'DUMP all custom 10000 mol.lammpstrj id type x y z vx vy vz mol'),
-                               # ('thermo_style', 'custom step vol temp ke pe etotal press pxy pxz pyz pxx pyy pzz'),
                                ('thermo', 100)
                            ] + mgo_potential_settings)
     print('Writing Lammps Input', temp)
     lammps_input.write_input(temp_directory)
 
     print('Running Lammps Calculation', temp)
-    subprocess.call(['mpirun', '-n', '2', 'lammps', '-i', 'lammps.in'], cwd=temp_directory) #, stdout=subprocess.PIPE)
+    subprocess.call(['mpirun', '-n', processors, lammps_command, '-i', 'lammps.in'], cwd=temp_directory)
+
     print('Getting final structure', temp)
-    lammps_run = LammpsRun(
-        os.path.join(temp_directory, 'in.data'),
-        lammps_log=os.path.join(temp_directory, 'lammps.log'),
-        lammps_dump=os.path.join(temp_directory, 'mol.lammpstrj')
-    )
-    previous_structure = lammps_run.final_structure
+    lammps_final_data = LammpsData.from_file(os.path.join(temp_directory, 'final.data'))
+    previous_structure = lammps_final_data.structure

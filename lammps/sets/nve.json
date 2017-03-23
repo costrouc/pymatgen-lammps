@@ -32,5 +32,5 @@
     "restart": "5000 current.restart",
     "run": 10000,
     "write_restart": "final.restart",
-    "write_data": "final.data"
+    "write_data": "final.data pair ij"
 }

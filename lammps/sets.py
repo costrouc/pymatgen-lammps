@@ -9,7 +9,7 @@ MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 class LammpsSet(LammpsInput):
-    def __init__(self, config_filename, lammps_data, data_filename="in.data"):
+    def __init__(self, config_filename, lammps_data, data_filename='initial.data'):
         with open(os.path.join(MODULE_DIR, 'sets', config_filename + ".json")) as f:
             lammps_script = json.load(f, object_pairs_hook=LammpsScript)
         lammps_script['read_data'] = data_filename
@@ -25,9 +25,9 @@ class RelaxSet(LammpsSet):
             self.lammps_script.update(user_lammps_settings)
 
 
-class NEBSet(LammpSet):
+class NEBSet(LammpsSet):
     def __init__(self, lammps_data, final_structure, user_lammps_settings=None, **kwargs):
-        super().__init__('relax', lammps_data, **kwargs)
+        super().__init__('neb', lammps_data, **kwargs)
         if user_lammps_settings:
             self.lammps_script.update(user_lammps_settings)
         self.final_structure = final_structure
@@ -38,8 +38,8 @@ class NEBSet(LammpSet):
 
         # Write final structure for NEB calculation (uses linear interpolation)
         # TODO: Works for now
-        with open(os.path.join(output_dir, 'final.coords')) as f:
-            f.write(structure_to_neb_input(structure))
+        with open(os.path.join(output_dir, 'last.coords'), 'w') as f:
+            f.write(structure_to_neb_input(self.final_structure))
 
 
 class NVESet(LammpsSet):
