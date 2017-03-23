@@ -1,0 +1,1 @@
+# NEB Calculation in Lammps
