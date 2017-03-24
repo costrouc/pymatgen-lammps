@@ -65,7 +65,7 @@ class NVESet(LammpsSet):
         """
         super().__init__('nve', lammps_data, **kwargs)
         if initial_temp:
-            self.lammps_script['velocity'][0] = 'all create {:.3f} {} units box'.format(temp_start, random.randint(0, 10000000))
+            self.lammps_script['velocity'][0] = 'all create {:.3f} {} units box'.format(initial_temp, random.randint(0, 10000000))
         else:
             self.lammps_script['velocity'] = []
         if user_lammps_settings:
@@ -107,7 +107,7 @@ class NPHSet(NVESet):
         super().__init__(lammps_data, **kwargs)
         press_end = press_end or press_start
         if initial_temp:
-            self.lammps_script['velocity'][0] = 'all create {:.3f} {} units box'.format(temp_start, random.randint(0, 10000000))
+            self.lammps_script['velocity'][0] = 'all create {:.3f} {} units box'.format(initial_temp, random.randint(0, 10000000))
         else:
             self.lammps_script['velocity'] = []
         self.lammps_script['fix'] = '1 all nph iso {:.3f} {:.3f} {:.3f}'.format(press_start, press_end, press_damp)
