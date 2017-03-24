@@ -50,7 +50,7 @@ class NEBSet(LammpsSet):
 
 
 class NVESet(LammpsSet):
-    def __init__(self, lammps_data, initial_velocity_temp=298.17, user_lammps_settings=None, **kwargs):
+    def __init__(self, lammps_data, initial_temp=298.17, user_lammps_settings=None, **kwargs):
         """ Make sure to initialize velocity for correct initial energy
 
         Example:
@@ -64,7 +64,10 @@ class NVESet(LammpsSet):
         zero momentum in the box.
         """
         super().__init__('nve', lammps_data, **kwargs)
-        self.lammps_script['velocity'][0] = 'all create {:.3f} {} units box'.format(initial_velocity_temp, random.randint(0, 10000000))
+        if initial_temp:
+            self.lammps_script['velocity'][0] = 'all create {:.3f} {} units box'.format(temp_start, random.randint(0, 10000000))
+        else:
+            self.lammps_script['velocity'] = []
         if user_lammps_settings:
             self.lammps_script.update(user_lammps_settings)
 
@@ -99,11 +102,14 @@ class NPTSet(NVESet):
 class NPHSet(NVESet):
     def __init__(self, lammps_data,
                  press_start=0.0, press_end=None, press_damp=1000.0,
+                 initial_temp=None,
                  user_lammps_settings=None, **kwargs):
         super().__init__(lammps_data, **kwargs)
-        temp_end = temp_end or temp_start
         press_end = press_end or press_start
-        self.lammps_script['velocity'][0] = 'all create {:.3f} {} units box'.format(temp_start, random.randint(0, 10000000))
+        if initial_temp:
+            self.lammps_script['velocity'][0] = 'all create {:.3f} {} units box'.format(temp_start, random.randint(0, 10000000))
+        else:
+            self.lammps_script['velocity'] = []
         self.lammps_script['fix'] = '1 all nph iso {:.3f} {:.3f} {:.3f}'.format(press_start, press_end, press_damp)
         if user_lammps_settings:
             self.lammps_script.update(user_lammps_settings)
