@@ -249,8 +249,9 @@ class LammpsData:
         # Get Potentials
         # TODO only gets pair potentials for now and no reason to keep str
         pair_potentials = {}
-        for s1, s2, *parameters in sections['PairIJ Coeffs']['data']:
-            pair_potentials[(index_symbols[s1], index_symbols[s2])] = ' '.join(list(map(str, parameters)))
+        if 'PairIJ Coeffs' in sections:
+            for s1, s2, *parameters in sections['PairIJ Coeffs']['data']:
+                pair_potentials[(index_symbols[s1], index_symbols[s2])] = ' '.join(list(map(str, parameters)))
 
         potentials = LammpsPotentials(pair_potentials, symbol_indicies)
 
