@@ -7,6 +7,12 @@ from .core import LammpsBox
 from .inputs import LammpsData
 
 
+def fields_view(array, fields):
+    return array.getfield(np.dtype(
+        {name: array.dtype.fields[name] for name in fields}
+    ))
+
+
 class LammpsRun(object):
     """ Parse Lammps Run
 
@@ -33,11 +39,11 @@ class LammpsRun(object):
 
         lammps_box = LammpsBox(**timestep['box'])
         species = self._atom_index
-        positions = timestep['atoms'][['x', 'y', 'z']].view(np.float).reshape(-1, 3)
+        positions = fields_view(timestep['atoms'], ['x', 'y', 'z'])
 
         site_properties = {}
         if all(p in timestep['atoms'].dtype.names for p in ['vx', 'vy', 'vz']):
-            site_properties['velocities'] = (timestep['atoms'][['vx', 'vy', 'vz']].view(np.float).reshape(-1, 3)).tolist()
+            site_properties['velocities'] = (fields_view(timestep['atoms'], ['vx', 'vy', 'vz'])).tolist()
 
         return Structure(lammps_box.lattice, species, positions, coords_are_cartesian=True, site_properties=site_properties)
 
@@ -86,7 +92,7 @@ class LammpsDump(object):
         if any(p not in timestep['atoms'].dtype.names for p in ['fx', 'fy', 'fz']):
             raise ValueError('Atom dumps must include fx fy fz to get forces')
 
-        return timestep['atoms'][['fx', 'fy', 'fz']].view(np.float).reshape(-1, 3)
+        return fields_view(timestep['atoms'], ['fx', 'fy', 'fz'])
 
     def _parse_dump(self):
         """
