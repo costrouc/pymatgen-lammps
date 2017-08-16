@@ -40,7 +40,6 @@ class LammpsRun(object):
         lammps_box = LammpsBox(**timestep['box'])
         species = self._atom_index
         positions = np.array(fields_view(timestep['atoms'], ['x', 'y', 'z']).tolist())
-        print(positions, type(positions), positions.shape)
 
         site_properties = {}
         if all(p in timestep['atoms'].dtype.names for p in ['vx', 'vy', 'vz']):
