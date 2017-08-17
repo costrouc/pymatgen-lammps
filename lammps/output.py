@@ -57,6 +57,11 @@ class LammpsRun(object):
             raise ValueError('Requires lammps log to get stress in md simulation')
         return self.lammps_log.get_stress(index)
 
+    def get_energy(self, index):
+        if self.lammps_log is None:
+            raise ValueError('Requires lammps log to get stress in md simulation')
+        return self.lammps_log.get_energy(index)
+
     @property
     def final_structure(self):
         return self.get_structure(-1)
