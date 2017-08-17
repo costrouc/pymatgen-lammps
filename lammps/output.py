@@ -162,16 +162,16 @@ class LammpsLog(object):
         return self.thermo_data['step'].view(np.float)
 
     def get_stress(self, index):
-        timestep = self.thermo_data[-1]
-        if any(p not in timestep.dtype.names for p in ['pxy', 'pxz', 'pyz', 'pxx', 'pyy', 'pzz']):
-            raise ValueError('Atom dumps must include pxy, pxz, pyz, pxx, pyy, pzz to get forces')
+        timestep = self.thermo_data[index]
+        if any(p not in timestep.dtype.names for p in ['Pxy', 'Pxz', 'Pyz', 'Pxx', 'Pyy', 'Pzz']):
+            raise ValueError('Atom dumps must include Pxy, Pxz, Pyz, Pxx, Pyy, Pzz to get stress')
 
-        pxx = timestep['pxx']
-        pyy = timestep['pyy']
-        pzz = timestep['pzz']
-        pxy = timestep['pxy']
-        pxz = timestep['pxz']
-        pyz = timestep['pyz']
+        pxx = timestep['Pxx']
+        pyy = timestep['Pyy']
+        pzz = timestep['Pzz']
+        pxy = timestep['Pxy']
+        pxz = timestep['Pxz']
+        pyz = timestep['Pyz']
 
         return np.array([
             [pxx, pxy, pxz],
@@ -179,39 +179,63 @@ class LammpsLog(object):
             [pxz, pyz, pzz]
         ])
 
+    def get_energy(self, index):
+        timestep = self.thermo_data[index]
+        if 'TotEng' not in timestep.dtype.names:
+            raise ValueError('Atom dumps mult include TotEng to get total energy')
+        return float(timestep['TotEng'])
+
     def _parse_log(self):
         """
         Parse the log file for the thermodynamic data.
         Sets the thermodynamic data as a structured numpy array with field names
         taken from the the thermo_style command.
         """
+        thermo_int_styles = {
+            'step', 'elapsed', 'elaplong', 'spcpu',
+            'part', 'atoms', 'nbuild', 'ndanger'
+        }
+
+        thermo_header = []
+        thermo_types = []
         thermo_data = []
-        thermo_pattern = None
+        inside_thermo_block = False
+        read_thermo_header = False
         with open(self.log_file, 'r') as logfile:
             for line in logfile:
                 # timestep, the unit depedns on the 'units' command
                 time = re.search('timestep\s+([0-9]+)', line)
                 if time and not thermo_data:
                     self.timestep = float(time.group(1))
+
                 # total number md steps
                 steps = re.search('run\s+([0-9]+)', line)
                 if steps and not thermo_data:
                     self.nmdsteps = int(steps.group(1))
+
                 # logging interval
                 thermo = re.search('thermo\s+([0-9]+)', line)
                 if thermo and not thermo_data:
                     self.interval = float(thermo.group(1))
+
                 # thermodynamic data, set by the thermo_style command
-                format = re.search('thermo_style.+', line)
-                if format and not thermo_data:
-                    fields = format.group().split()[2:]
-                    thermo_pattern_string = "\s*([0-9eE\.+-]+)" + "".join(
-                        ["\s+([0-9eE\.+-]+)" for _ in range(len(fields) - 1)])
-                    thermo_pattern = re.compile(thermo_pattern_string)
-                if thermo_pattern:
-                    if thermo_pattern.search(line):
-                        m = thermo_pattern.search(line)
-                        thermo_data.append(
-                            tuple([float(x) for i, x in enumerate(m.groups())]))
-        thermo_data_dtype = np.dtype([(str(fld), np.float64) for fld in fields])
+                if "Memory usage per processor = " in line or \
+                   "Per MPI rank memory allocation" in line:
+                    inside_thermo_block = True
+                    read_thermo_header = False
+                elif inside_thermo_block:
+                    if not read_thermo_header:
+                        if len(thermo_header) == 0:
+                            thermo_header = line.split()
+                            thermo_types = [np.int if h.lower() in thermo_int_styles else np.float for h in thermo_header]
+                        else:
+                            if thermo_header != line.split():
+                                raise ValueError('Cannot parse log file where thermo_style changes from one run to next. We suggest doing multiple seperate calculations')
+                        read_thermo_header = True
+                    elif "Loop time of " in line:
+                        inside_thermo_block = False
+                        read_thermo_header = False
+                    else:
+                        thermo_data.append(tuple(t(v) for t, v in zip(thermo_types, line.split())))
+        thermo_data_dtype = np.dtype([(header, nptype) for header, nptype in zip(thermo_header, thermo_types)])
         self.thermo_data = np.array(thermo_data, dtype=thermo_data_dtype)
