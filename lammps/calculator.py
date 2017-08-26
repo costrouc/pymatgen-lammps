@@ -8,17 +8,18 @@ from .inputs import LammpsScript
 
 
 class LammpsCalculator:
-    def __init__(self, cwd='.', max_workers=1):
+    def __init__(self, cwd='.', cmd=None, max_workers=1):
         self._max_workers = max_workers
         if self._max_workers > multiprocessing.cpu_count():
             raise ValueError('cannot have more workers than max number of cpus')
         self.cwd = cwd
+        self.cmd = cmd or ['lammps']
 
     async def _create(self):
         self._pending_queue = asyncio.Queue()
         self._processes = []
         for i in range(self._max_workers):
-            process = _LammpsProcess(cwd=self.cwd)
+            process = _LammpsProcess(cwd=self.cwd, cmd=self.cmd)
             await process._create()
             self._processes.append(process)
         self._round_robin_processes = itertools.cycle(self._processes)
@@ -35,12 +36,13 @@ class LammpsCalculator:
 
 
 class _LammpsProcess:
-    def __init__(self, cwd):
+    def __init__(self, cwd, cmd):
         self.cwd = cwd
+        self.cmd = cmd
 
     async def _create(self):
         self._process = await asyncio.create_subprocess_exec(
-            'lammps', cwd=self.cwd,
+            *self.cmd, cwd=self.cwd,
             stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT)
         self.pending_queue = asyncio.Queue()
         self.running_queue = asyncio.Queue()

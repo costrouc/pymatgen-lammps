@@ -30,7 +30,7 @@ script = [
 
 
 async def main(loop):
-    lammps_calculator = LammpsCalculator(cwd='/home/costrouc/scratch/python/asyncio-process/simple', max_workers=4)
+    lammps_calculator = LammpsCalculator(cwd='/home/costrouc/scratch/python/asyncio-process/simple', max_workers=2, cmd=['lammps_serial'])
     await lammps_calculator._create()
 
     start = time.time()
