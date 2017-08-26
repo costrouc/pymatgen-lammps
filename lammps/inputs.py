@@ -38,6 +38,38 @@ class LammpsScript(OrderedDict):
                 lines = "".join([lines, " {}{}".format(str(v1), os.linesep)])
         return lines
 
+    @property
+    def log_filename(self):
+        log = self.get('log', 'log.lammps')
+        if log is None:
+            log = "log.lammps"
+        elif isinstance(log, (list, tuple)):
+            log = log[-1]
+        return str(log).split(' ')[0]
+
+    @property
+    def data_filenames(self):
+        data = self.get('read_data', None)
+        if data is None:
+            return []
+        elif isinstance(data, (list, tuple)):
+            return [str(d).split()[0] for d in data]
+        else:
+            return [str(data).split()[0]]
+
+    @property
+    def dump_filename(self):
+        dump = self.get('dump', None)
+        if dump is None:
+            return None
+        elif isinstance(dump, (list, tuple)):
+            dump = log[-1]
+
+        dump = str(dump).split()
+        if len(dump) < 4:
+            raise ValueError('Invalid dump command: %s' % dump)
+        return dump[4]
+
     def write_file(self, filename):
         with open(filename, 'w') as f:
             f.write(str(self))
