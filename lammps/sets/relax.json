@@ -16,6 +16,8 @@
     "dihedral_style": "charmm",
     "improper_style": "cvff",
     "read_data": "initial.data",
+    "pair_coeff": [],
+    "set": [],
     "region": [],
     "group": [],
     "neighbor": "2.0 bin",

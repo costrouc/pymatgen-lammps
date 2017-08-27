@@ -16,6 +16,8 @@
     "dihedral_style": "charmm",
     "improper_style": "cvff",
     "read_data": "initial.data",
+    "pair_coeff": [],
+    "set": [],
     "region": [],
     "group": [],
     "atom_modify": "sort 0 0.0",
