@@ -52,6 +52,7 @@ setup(
     install_requires=[
         'pymatgen==2017.7.4',
     ],
+    package_data={'lammps': ['sets/*.json']},
     tests_require=['pytest'],
     # entry_points={
     #     'console_scripts': [
