@@ -8,9 +8,10 @@ import numpy as np
 from .core import LammpsBox, LammpsPotentials
 
 class LammpsInput:
-    def __init__(self, lammps_script, lammps_data):
+    def __init__(self, lammps_script, lammps_data, additional_files=None):
         self.lammps_data = lammps_data
         self.lammps_script = lammps_script
+        self.additional_files = additional_files or []
 
     def write_input(self, output_dir, input_filename="lammps.in", make_dir=True):
         if make_dir and not os.path.exists(output_dir):
@@ -18,6 +19,10 @@ class LammpsInput:
 
         self.lammps_data.write_file(os.path.join(output_dir, self.lammps_script['read_data']))
         self.lammps_script.write_file(os.path.join(output_dir, input_filename))
+
+        for file_buffer, filename in self.additional_files:
+            with open(os.path.join(output_dir, filename)) as f:
+                f.write(file_buffer)
 
 
 class LammpsScript(OrderedDict):
