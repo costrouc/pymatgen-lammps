@@ -4,7 +4,7 @@ import re
 import itertools
 import multiprocessing
 
-from .inputs import LammpsScript
+from ..inputs import LammpsScript
 
 
 class LammpsCalculator:

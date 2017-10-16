@@ -51,6 +51,7 @@ setup(
     packages=find_packages(exclude=['docs', 'tests', 'notebooks']),
     install_requires=[
         'pymatgen==2017.7.4',
+        'zmq_legos'
     ],
     package_data={'lammps': ['sets/*.json']},
     tests_require=['pytest'],
