@@ -1,142 +1,39 @@
-import os
-import re
-import uuid
+import urllib.parse
 import asyncio
 import multiprocessing
-import tempfile
-import shutil
 
-from ..output import LammpsDump, LammpsLog
+from zmq_legos.mpd import Worker as MDPWorker
 
-
-class LammpsJob:
-    def __init__(self, stdin, files=None, properties=None):
-        self.id = uuid.uuid4().hex
-        self.future = asyncio.Future()
-        self.stdin = stdin
-        self.files = files or {}
-        self.properties = properties or set()
-        self.stdout = None
-        self.results = {}
-
+from .process import LammpsProcess
+from .base import LammpsJob
 
 class LammpsWorker:
-    def __init__(self, cmd=None, num_workers=None):
-        self.cmd = cmd or ['lammps']
+    def __init__(self, scheduler, command=None, num_workers=None, loop=None):
+        self.command = command
         self.num_workers = num_workers or multiprocessing.cpu_count()
-        if num_workers > multiprocessing.cpu_count():
+        if self.num_workers > multiprocessing.cpu_count():
             raise ValueError('cannot have more workers than cpus')
 
+        parsed = urllib.parse.urlparse(scheduler)
+        stop_event = asyncio.Event()
+        self.mdp_worker = MDPWorker(
+            stop_event,
+            max_messages=self.num_workers,
+            protocol=parsed.schema, port=parsed.port, hostname=parsed.hostname,
+            loop=loop)
+
     async def create(self):
-        self._pending_queue = asyncio.Queue()
-        self.completed_queue = asyncio.Queue()
         self._processes = []
         for _ in range(self.num_workers):
-            tempdir = tempfile.mkdtemp()
-            process = LammpsProcess(cwd=tempdir, cmd=self.cmd)
-            await process.create(self._pending_queue, self.completed_queue)
+            process = LammpsProcess(command=self.command)
+            await process.create(
+                self.mdp_worker.queued_messages,
+                self.mdp_worker.completed_messages) # need to adapt local version
             self._processes.append(process)
 
     def shutdown(self):
         for process in self._processes:
             process.shutdown()
-            shutil.rmtree(process.cwd)
 
-    async def submit(self, stdin, files=None, properties=None):
-        lammps_job = LammpsJob(stdin=stdin, files=files, properties=properties)
-        await self._pending_queue.put(lammps_job)
-        return lammps_job
-
-
-class LammpsProcess:
-    def __init__(self, cwd=None, cmd=None):
-        self.cwd = cwd or '.'
-        self.cmd = cmd or ['lammps']
-
-    async def create(self, pending_queue, completed_queue):
-        self.process = await self.create_lammps_process()
-        self.pending_queue = pending_queue
-        self.completed_queue = completed_queue
-        self._job_task = asyncio.ensure_future(self._handle_job())
-
-    def shutdown(self):
-        self.process.kill() # TODO: not very nice
-
-    async def create_lammps_process(self):
-        return await asyncio.create_subprocess_exec(
-            *self.cmd, cwd=self.cwd,
-            stdin=asyncio.subprocess.PIPE,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.STDOUT)
-
-    def _write_inputs(self, lammps_job):
-        for filename, content in lammps_job.files.items():
-            with open(os.path.join(self.cwd, filename), 'wb') as f:
-                f.write(content)
-        self.process.stdin.write((
-            f'{lammps_job.stdin}'
-            f'\nprint "====={lammps_job.id}====="\nclear\n'
-        ).encode('utf-8'))
-        self.process.stdin.write(b'\nprint "' + b'hack to force flush' * 500 + b'"\n')
-
-    async def _monitor_job(self, lammps_job):
-        lammps_job_buffer = []
-        lammps_job_regex = re.compile(b"^={5}(.{32})={5}\n$")
-        async for line in self.process.stdout:
-            match = lammps_job_regex.match(line)
-            if match:
-                if lammps_job.id != match.group(1).decode():
-                    raise ValueError('jobs ran out of order (should not happen)')
-                lammps_job.stdout = b''.join(lammps_job_buffer)
-                return True
-            elif b'ERROR' in line:
-                lammps_job_buffer.append(line)
-                lammps_job.stdout = b''.join(lammps_job_buffer)
-                raise ValueError('error executing script')
-            elif b'hack to force flush' not in line:
-                lammps_job_buffer.append(line)
-
-    def _process_results(self, lammps_job):
-        log_filename = 'log.lammps'
-        dump_filename = None
-        for line in lammps_job.stdin.split('\n'):
-            tokens = line.split()
-            if len(tokens) == 0:
-                continue
-            if tokens[0] == 'log':
-                log_filename = tokens[1]
-            elif tokens[0] == 'dump':
-                dump_filename = tokens[5]
-
-        lammps_log = LammpsLog(os.path.join(self.cwd, log_filename))
-        if dump_filename is None and ({'forces'} & lammps_job != set()):
-            raise ValueError('requested properties require dump file')
-        elif dump_filename:
-            lammps_dump = LammpsDump(os.path.join(self.cwd, dump_filename))
-
-        if 'stress' in lammps_job.properties:
-            lammps_job.results['stress'] = lammps_log.get_stress(-1).tolist()
-        if 'energy' in lammps_job.properties:
-            lammps_job.results['energy'] = lammps_log.get_energy(-1)
-        if 'forces' in lammps_job.properties:
-            lammps_job.results['forces'] = lammps_dump.get_forces(-1).tolist()
-
-    async def _handle_job(self):
-        """ Job: {id, script, status, stdout}
-
-        """
-        while True:
-            lammps_job_buffer = []
-            lammps_job = await self.pending_queue.get()
-            self._write_inputs(lammps_job)
-            try:
-                await self._monitor_job(lammps_job) # job error restart lammps process
-                self._process_results(lammps_job)
-                lammps_job.future.set_result(True)
-            except ValueError as error:
-                if 'error executing script' in error.message:
-                    self.process.kill()
-                    self.process = await self.create_lammps_process()
-                lammps_job.future.set_result(False)
-            await self.completed_queue.put(lammps_job)
-            self.pending_queue.task_done()
+    async def run(self):
+        await self.mdp_worker.run('lammps.job')
