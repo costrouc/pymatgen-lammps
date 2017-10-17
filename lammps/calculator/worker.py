@@ -4,6 +4,7 @@ import uuid
 import asyncio
 import multiprocessing
 import tempfile
+import shutil
 
 from ..output import LammpsDump, LammpsLog
 
@@ -20,8 +21,7 @@ class LammpsJob:
 
 
 class LammpsWorker:
-    def __init__(self, cwd=None, cmd=None, num_workers=None):
-        self.cwd = cwd or '.'
+    def __init__(self, cmd=None, num_workers=None):
         self.cmd = cmd or ['lammps']
         self.num_workers = num_workers or multiprocessing.cpu_count()
         if num_workers > multiprocessing.cpu_count():
@@ -30,10 +30,17 @@ class LammpsWorker:
     async def create(self):
         self._pending_queue = asyncio.Queue()
         self.completed_queue = asyncio.Queue()
+        self._processes = []
         for _ in range(self.num_workers):
             tempdir = tempfile.mkdtemp()
             process = LammpsProcess(cwd=tempdir, cmd=self.cmd)
             await process.create(self._pending_queue, self.completed_queue)
+            self._processes.append(process)
+
+    def shutdown(self):
+        for process in self._processes:
+            process.shutdown()
+            shutil.rmtree(process.cwd)
 
     async def submit(self, stdin, files=None, properties=None):
         lammps_job = LammpsJob(stdin=stdin, files=files, properties=properties)
@@ -51,6 +58,9 @@ class LammpsProcess:
         self.pending_queue = pending_queue
         self.completed_queue = completed_queue
         self._job_task = asyncio.ensure_future(self._handle_job())
+
+    def shutdown(self):
+        self.process.kill() # TODO: not very nice
 
     async def create_lammps_process(self):
         return await asyncio.create_subprocess_exec(
