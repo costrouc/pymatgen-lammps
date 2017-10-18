@@ -2,10 +2,10 @@ import urllib.parse
 import asyncio
 import multiprocessing
 
-from zmq_legos.mpd import Worker as MDPWorker
+from zmq_legos.mdp import Worker as MDPWorker
 
 from .process import LammpsProcess
-from .base import LammpsJob
+
 
 class LammpsWorker:
     def __init__(self, scheduler, command=None, num_workers=None, loop=None):
@@ -16,11 +16,10 @@ class LammpsWorker:
 
         parsed = urllib.parse.urlparse(scheduler)
         stop_event = asyncio.Event()
-        self.mdp_worker = MDPWorker(
-            stop_event,
-            max_messages=self.num_workers,
-            protocol=parsed.schema, port=parsed.port, hostname=parsed.hostname,
-            loop=loop)
+        self.mdp_worker = MDPWorker(stop_event,
+                                    max_messages=self.num_workers,
+                                    protocol=parsed.schema, port=parsed.port, hostname=parsed.hostname,
+                                    loop=loop)
 
     async def create(self):
         self._processes = []
