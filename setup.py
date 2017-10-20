@@ -51,13 +51,14 @@ setup(
     packages=find_packages(exclude=['docs', 'tests', 'notebooks']),
     install_requires=[
         'pymatgen==2017.7.4',
-        'zmq_legos'
+        'zmq_legos',
+        'click'
     ],
     package_data={'lammps': ['sets/*.json']},
     tests_require=['pytest'],
-    # entry_points={
-    #     'console_scripts': [
-    #         'lammps_wrapper=mattoolkit.__main__:main'
-    #     ]
-    # }
+    entry_points={
+        'console_scripts': [
+            'pylammps=lammps.__main__:main'
+        ]
+    }
 )

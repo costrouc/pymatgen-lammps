@@ -40,7 +40,7 @@ def init_worker(stop_event):
     try:
         init_logging()
         loop = init_event_loop()
-        worker = LammpsWorker(stop_event, MASTER_URI, num_workers=2, loop=loop)
+        worker = LammpsWorker(stop_event, MASTER_URI, num_workers=4, loop=loop)
         loop.run_until_complete(run_worker(worker))
     except KeyboardInterrupt:
         stop_event.set()
