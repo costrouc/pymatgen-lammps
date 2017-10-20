@@ -34,8 +34,9 @@ def normalize_uri(uri):
 @cli.command()
 @click.option('-m', '--master')
 @click.option('-n', '--num-workers', type=int)
+@click.option('--command')
 @click.option('-c', '--config', type=click.Path(exists=True))
-def worker(master, num_workers, config):
+def worker(master, num_workers, command, config):
     if config:
         with open(config) as f:
             config = json.load(f)
@@ -52,7 +53,7 @@ def worker(master, num_workers, config):
     try:
         stop_event = asyncio.Event()
         loop = init_event_loop()
-        worker = LammpsWorker(stop_event, normalize_uri(master_uri), num_workers=num_workers, loop=loop)
+        worker = LammpsWorker(stop_event, normalize_uri(master_uri), num_workers=num_workers, command=command, loop=loop)
         loop.run_until_complete(run_worker(worker))
     except KeyboardInterrupt:
         stop_event.set()
