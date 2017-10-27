@@ -3,6 +3,7 @@ import asyncio
 import urllib.parse
 import pickle
 import uuid
+import logging
 
 from zmq_legos.mdp import Client as MDPClient
 
@@ -12,6 +13,7 @@ from .process import LammpsProcess
 class LammpsLocalClient:
     def __init__(self, command=None, num_workers=None):
         self.command = command
+        self.logger = logging.getLogger('lammps.local_client')
         self.num_workers = num_workers or multiprocessing.cpu_count()
         if num_workers > multiprocessing.cpu_count():
             raise ValueError('cannot have more workers than cpus')
@@ -21,6 +23,7 @@ class LammpsLocalClient:
         self._pending_queue = asyncio.Queue()
         self._completed_queue = asyncio.Queue()
         self._processes = []
+        self.logger.info(f'creating {self.num_workers} lammps processes')
         for _ in range(self.num_workers):
             process = LammpsProcess(command=self.command)
             await process.create(self._pending_queue, self._completed_queue)
@@ -54,6 +57,7 @@ class LammpsDistributedClient:
     def __init__(self, scheduler, loop=None):
         parsed = urllib.parse.urlparse(scheduler)
         self.mdp_client = MDPClient(protocol=parsed.scheme, port=parsed.port, hostname=parsed.hostname, loop=loop)
+        self.logger = logging.getLogger('lammps.distributed_client')
         self.lammps_jobs = {}
 
     async def create(self):
@@ -69,6 +73,7 @@ class LammpsDistributedClient:
         future = asyncio.Future()
         self.lammps_jobs[lammps_job_input['id']] = future
         await self.mdp_client.submit(b'lammps.job', [pickle.dumps(lammps_job_input)])
+        self.logger.debug(f'lammps job {lammps_job_input["id"]} submitted')
         return future
 
     def shutdown(self):
@@ -78,4 +83,5 @@ class LammpsDistributedClient:
         while True:
             service, message = await self.mdp_client.get()
             lammps_job_output = pickle.loads(message[0])
+            self.logger.debug(f'lammps job {lammps_job_output["id"]} completed')
             (self.lammps_jobs.pop(lammps_job_output['id'])).set_result(lammps_job_output)
