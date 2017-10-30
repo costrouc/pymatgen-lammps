@@ -31,10 +31,11 @@ class LammpsWorker:
             await process.create(self.mdp_worker.queued_messages, self.mdp_worker.completed_messages)
             self._processes.append(process)
 
-    def shutdown(self):
+    async def shutdown(self):
         self.logger.info(f'shutting down {self.num_workers} lammps processes')
         for process in self._processes:
             process.shutdown()
+        await self.mdp_worker.disconnect()
 
     async def run(self):
         await self.mdp_worker.run(b'lammps.job')

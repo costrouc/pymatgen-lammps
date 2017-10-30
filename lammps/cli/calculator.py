@@ -57,6 +57,8 @@ def worker(master, num_workers, command, config):
         loop.run_until_complete(run_worker(worker))
     except KeyboardInterrupt:
         stop_event.set()
+        loop.run_until_complete(worker.shutdown())
+
 
 
 @cli.command()
