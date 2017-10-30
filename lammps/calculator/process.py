@@ -4,6 +4,7 @@ import asyncio
 import shutil
 import tempfile
 import pickle
+import logging
 
 from ..output import LammpsDump, LammpsLog
 
@@ -12,6 +13,7 @@ class LammpsProcess:
     def __init__(self, command=None):
         self.directory = tempfile.mkdtemp()
         self.command = command or 'lammps'
+        self.logger = logging.getLogger(f'{self.__module__}.{self.__class__.__name__}')
         if not shutil.which(self.command):
             raise ValueError(f'lammps executable {self.command} does not exist')
 
@@ -33,6 +35,7 @@ class LammpsProcess:
             stderr=asyncio.subprocess.STDOUT)
 
     def _write_inputs(self, lammps_job_input):
+        self.logger.debug(f'lammps job {lammps_job_input["id"]} writing stdin and files {lammps_job_input["files"].keys()}')
         for filename, content in lammps_job_input['files'].items():
             with open(os.path.join(self.directory, filename), 'w') as f:
                 f.write(content)
@@ -51,10 +54,12 @@ class LammpsProcess:
                 if lammps_job_output['id'] != match.group(1).decode():
                     raise ValueError('job id does not match currently running job (should not happen)')
                 lammps_job_output['stdout'] = b''.join(lammps_job_buffer)
+                self.logger.debug(f'lammps job {lammps_job_output["id"]} completed')
                 return True
             elif b'ERROR' in line:
                 lammps_job_buffer.append(line)
                 lammps_job_output['stdout'] = b''.join(lammps_job_buffer)
+                self.logger.debug(f'lammps job {lammps_job_output["id"]} encountered error')
                 raise ValueError('error executing script')
             elif b'hack to force flush' not in line:
                 lammps_job_buffer.append(line)
@@ -77,6 +82,7 @@ class LammpsProcess:
         elif dump_filename:
             lammps_dump = LammpsDump(os.path.join(self.directory, dump_filename))
 
+        self.logger.debug(f'lammps job {lammps_job_input["id"]} properties {lammps_job_input["properties"]} being collected')
         if 'stress' in lammps_job_input['properties']:
             lammps_job_output['results']['stress'] = lammps_log.get_stress(-1).tolist()
         if 'energy' in lammps_job_input['properties']:
@@ -96,6 +102,7 @@ class LammpsProcess:
                 self._process_results(lammps_job_input, lammps_job_output)
             except ValueError as error:
                 if 'error executing script' in error.message:
+                    self.logger.warning('restarting lammps process')
                     self.process.kill()
                     self.process = await self.create_lammps_process()
                 lammps_job_output['error'] = error.message

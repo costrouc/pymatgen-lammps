@@ -3,12 +3,14 @@
 
 import asyncio
 import urllib.parse
+import logging
 
 from zmq_legos.mdp import Scheduler as MDPScheduler
 
 
 class LammpsMaster:
     def __init__(self, stop_event, scheduler, loop=None):
+        self.logger = logging.getLogger(f'{self.__module__}.{self.__class__.__name__}')
         parsed = urllib.parse.urlparse(scheduler)
         self.mdp_scheduler = MDPScheduler(
             stop_event,

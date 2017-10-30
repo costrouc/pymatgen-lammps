@@ -13,7 +13,7 @@ from .process import LammpsProcess
 class LammpsLocalClient:
     def __init__(self, command=None, num_workers=None):
         self.command = command
-        self.logger = logging.getLogger('lammps.local_client')
+        self.logger = logging.getLogger(f'{self.__module__}.{self.__class__.__name__}')
         self.num_workers = num_workers or multiprocessing.cpu_count()
         if num_workers > multiprocessing.cpu_count():
             raise ValueError('cannot have more workers than cpus')
@@ -57,7 +57,7 @@ class LammpsDistributedClient:
     def __init__(self, scheduler, loop=None):
         parsed = urllib.parse.urlparse(scheduler)
         self.mdp_client = MDPClient(protocol=parsed.scheme, port=parsed.port, hostname=parsed.hostname, loop=loop)
-        self.logger = logging.getLogger('lammps.distributed_client')
+        self.logger = logging.getLogger(f'{self.__module__}.{self.__class__.__name__}')
         self.lammps_jobs = {}
 
     async def create(self):
