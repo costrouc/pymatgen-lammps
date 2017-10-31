@@ -6,6 +6,7 @@ import tempfile
 import pickle
 import logging
 import time
+import shlex
 
 from ..output import LammpsDump, LammpsLog
 
@@ -13,10 +14,10 @@ from ..output import LammpsDump, LammpsLog
 class LammpsProcess:
     def __init__(self, command=None):
         self.directory = tempfile.mkdtemp()
-        self.command = command or 'lammps'
+        self.command = shlex.split(command or 'lammps')
         self.logger = logging.getLogger(f'{self.__module__}.{self.__class__.__name__}')
-        if not shutil.which(self.command):
-            raise ValueError(f'lammps executable {self.command} does not exist')
+        if not shutil.which(self.command[0]): # simple test
+            raise ValueError(f'lammps executable {self.command[0]} does not exist')
 
     async def create(self, pending_queue, completed_queue):
         self.process = await self.create_lammps_process()
@@ -30,7 +31,7 @@ class LammpsProcess:
 
     async def create_lammps_process(self):
         return await asyncio.create_subprocess_exec(
-            self.command, cwd=self.directory,
+            *self.command, cwd=self.directory,
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT)
