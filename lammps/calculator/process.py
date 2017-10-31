@@ -5,6 +5,7 @@ import shutil
 import tempfile
 import pickle
 import logging
+import time
 
 from ..output import LammpsDump, LammpsLog
 
@@ -48,6 +49,7 @@ class LammpsProcess:
     async def _monitor_job(self, lammps_job_output):
         lammps_job_buffer = []
         lammps_job_regex = re.compile(b"^={5}(.{32})={5}\n$")
+        self.logger.debug(f'monitoring running lammps job {lammps_job_output["id"]}')
         async for line in self.process.stdout:
             match = lammps_job_regex.match(line)
             if match:
@@ -97,9 +99,15 @@ class LammpsProcess:
             lammps_job_input = pickle.loads(message[0]) # lammps_job_input {id, stdin, files, properties}
             lammps_job_output = {'id': lammps_job_input['id'], 'stdout': None, 'results': {}, 'error': None}
             try:
+                start_time = time.perf_counter()
                 self._write_inputs(lammps_job_input)
+                self.logger.debug(f'lammps job {lammps_job_output["id"]} writing inputs {time.perf_counter() - start_time} [sec]')
+                start_time = time.perf_counter()
                 await self._monitor_job(lammps_job_output) # job error restart lammps process
+                self.logger.debug(f'lammps job {lammps_job_output["id"]} completed in {time.perf_counter() - start_time} [sec]')
+                start_time = time.perf_counter()
                 self._process_results(lammps_job_input, lammps_job_output)
+                self.logger.debug(f'lammps job {lammps_job_output["id"]} processing results {time.perf_counter() - start_time} [sec]')
             except ValueError as error:
                 if 'error executing script' in error.message:
                     self.logger.warning('restarting lammps process')
