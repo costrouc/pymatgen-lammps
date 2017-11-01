@@ -30,11 +30,13 @@ class LammpsProcess:
         shutil.rmtree(self.directory)
 
     async def create_lammps_process(self):
-        return await asyncio.create_subprocess_exec(
+        process =  await asyncio.create_subprocess_exec(
             *self.command, cwd=self.directory,
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT)
+        # check that lammps process started properly (using print statement)
+        return process
 
     def _write_inputs(self, lammps_job_input):
         self.logger.debug(f'lammps job {lammps_job_input["id"]} writing stdin and files {lammps_job_input["files"].keys()}')
