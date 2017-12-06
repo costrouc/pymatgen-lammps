@@ -1,0 +1,17 @@
+[[source]]
+
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+
+[packages]
+
+pymatgen = "==2017.7.4"
+zmq-legos = "*"
+click = "*"
+
+
+[dev-packages]
+
+ipykernel = "*"
