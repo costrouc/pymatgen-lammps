@@ -52,7 +52,6 @@ setup(
     install_requires=[
         'pymatgen==2017.7.4',
         'zmq_legos',
-        'click'
     ],
     package_data={'lammps': ['sets/*.json']},
     tests_require=['pytest'],
