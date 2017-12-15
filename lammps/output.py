@@ -108,7 +108,7 @@ class LammpsDump(object):
 
     def get_lammps_box(self, index):
         timestep = self.trajectories[index]
-        return LammpsBox(timestep['box'])
+        return LammpsBox(**timestep['box'])
 
     def _parse_dump(self):
         """

@@ -95,7 +95,7 @@ class LammpsProcess:
         if 'forces' in lammps_job_input['properties']:
             lammps_job_output['results']['forces'] = lammps_dump.get_forces(-1).tolist()
         if 'lattice' in lammps_job_input['properties']:
-            lammps_job_output['results']['lattice'] = (lammps_dump.get_lammps_box(-1)).lattice.tolist()
+            lammps_job_output['results']['lattice'] = (lammps_dump.get_lammps_box(-1)).lattice.matrix.tolist()
         if 'positions' in lammps_job_input['properties']:
             lammps_job_output['results']['positions'] = lammps_dump.get_positions(-1).tolist()
         if 'velocities' in lammps_job_input['properties']:
