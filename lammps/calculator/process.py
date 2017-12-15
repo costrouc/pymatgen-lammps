@@ -82,7 +82,7 @@ class LammpsProcess:
                 dump_filename = tokens[5]
 
         lammps_log = LammpsLog(os.path.join(self.directory, log_filename))
-        if dump_filename is None and ({'forces'} & lammps_job_input['properties'] != set()):
+        if dump_filename is None and ({'forces', 'lattice', 'positions', 'velocities'} & lammps_job_input['properties'] != set()):
             raise ValueError('requested properties require dump file')
         elif dump_filename:
             lammps_dump = LammpsDump(os.path.join(self.directory, dump_filename))
@@ -94,6 +94,12 @@ class LammpsProcess:
             lammps_job_output['results']['energy'] = lammps_log.get_energy(-1)
         if 'forces' in lammps_job_input['properties']:
             lammps_job_output['results']['forces'] = lammps_dump.get_forces(-1).tolist()
+        if 'lattice' in lammps_job_input['properties']:
+            lammps_job_output['results']['lattice'] = (lammps_dump.get_lammps_box(-1)).lattice.tolist()
+        if 'positions' in lammps_job_input['properties']:
+            lammps_job_output['results']['positions'] = lammps_dump.get_positions(-1).tolist()
+        if 'velocities' in lammps_job_input['properties']:
+            lammps_job_output['results']['velocities'] = lammps_dump.get_velocities(-1).tolist()
 
     async def _handle_jobs(self):
         while True:

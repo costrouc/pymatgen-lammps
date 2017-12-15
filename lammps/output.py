@@ -32,20 +32,16 @@ class LammpsRun(object):
     def get_structure(self, index):
         if self.lammps_dump is None:
             raise ValueError('Requires lammps dump to get structures in md simulation')
-
-        timestep = self.lammps_dump.trajectories[index]
-        if any(p not in timestep['atoms'].dtype.names for p in ['x', 'y', 'z']):
-            raise ValueError('Atom dumps must include x y z positions to get structures')
-
-        lammps_box = LammpsBox(**timestep['box'])
+        positions = self.lammps_dump.get_positions(index)
+        lammps_box = self.lammps_dump.get_lammps_box(index)
         species = self._atom_index
-        positions = np.array(fields_view(timestep['atoms'], ['x', 'y', 'z']).tolist())
-
         site_properties = {}
-        if all(p in timestep['atoms'].dtype.names for p in ['vx', 'vy', 'vz']):
-            site_properties['velocities'] = fields_view(timestep['atoms'], ['vx', 'vy', 'vz']).tolist()
-
-        return Structure(lammps_box.lattice, species, positions, coords_are_cartesian=True, site_properties=site_properties)
+        try:
+            site_properties['velocities'] = self.lammps_dump.get_velocities(index)
+        except ValueError:
+            pass
+        return Structure(lammps_box.lattice, species, positions,
+                         coords_are_cartesian=True, site_properties=site_properties)
 
     def get_forces(self, index):
         if self.lammps_dump is None:
@@ -92,12 +88,27 @@ class LammpsDump(object):
     def timesteps(self):
         return np.array([t['timestep'] for t in self.trajectories])
 
+    def get_positions(self, index):
+        timestep = self.trajectories[index]
+        if any(p not in timestep['atoms'].dtype.names for p in {'x', 'y', 'z'}):
+            raise ValueError('Atom dumps must include x y z positions to get positions')
+        return np.array(fields_view(timestep['atoms'], ['x', 'y', 'z']).tolist())
+
+    def get_velocities(self, index):
+        timestep = self.trajectories[index]
+        if all(p not in timestep['atoms'].dtype.names for p in {'vx', 'vy', 'vz'}):
+            raise ValueError('Atom dumps must include vx vy vz velocities to get velocities')
+        return np.array(fields_view(timestep['atoms'], ['vx', 'vy', 'vz']).tolist())
+
     def get_forces(self, index):
         timestep = self.trajectories[index]
-        if any(p not in timestep['atoms'].dtype.names for p in ['fx', 'fy', 'fz']):
+        if any(p not in timestep['atoms'].dtype.names for p in {'fx', 'fy', 'fz'}):
             raise ValueError('Atom dumps must include fx fy fz to get forces')
-
         return np.array(fields_view(timestep['atoms'], ['fx', 'fy', 'fz']).tolist())
+
+    def get_lammps_box(self, index):
+        timestep = self.trajectories[index]
+        return LammpsBox(timestep['box'])
 
     def _parse_dump(self):
         """
