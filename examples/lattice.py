@@ -4,7 +4,7 @@ import subprocess
 
 from pymatgen import Structure, Lattice, Specie
 
-from lammps import RelaxSet, LammpsRun, LammpsData, LammpsPotentials
+from pmg_lammps import RelaxSet, LammpsRun, LammpsData, LammpsPotentials
 
 
 supercell = (5, 5, 5)

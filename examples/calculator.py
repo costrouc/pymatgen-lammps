@@ -1,7 +1,7 @@
 import time
 import asyncio
 
-from lammps.calculator import LammpsCalculator
+from pmg_lammps.calculator import LammpsCalculator
 
 
 script = [

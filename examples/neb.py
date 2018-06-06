@@ -3,7 +3,7 @@ import subprocess
 
 from pymatgen import Structure, Lattice, Specie
 
-from lammps import LammpsData, LammpsPotentials, NEBSet
+from pmg_lammps import LammpsData, LammpsPotentials, NEBSet
 
 supercell = (1, 1, 1)
 a = 4.1990858 # From evaluation of potential

@@ -1,4 +1,4 @@
-from lammps.inputs import LammpsScript
+from pmg_lammps.inputs import LammpsScript
 
 
 input_script = [

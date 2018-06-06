@@ -8,7 +8,7 @@ from pymatgen.core import Specie, Structure, Lattice
 import numpy as np
 
 from lammps.utils import plane_from_miller_index
-from lammps import LammpsData, LammpsRun, LammpsPotentials, NPTSet, NVESet, NPHSet, LammpsBox
+from pmg_lammps import LammpsData, LammpsRun, LammpsPotentials, NPTSet, NVESet, NPHSet, LammpsBox
 
 def distance_from_miller_index(site, miller_index):
     point, normal = plane_from_miller_index(site.lattice, miller_index)

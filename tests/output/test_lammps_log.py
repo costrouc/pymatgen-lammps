@@ -1,4 +1,4 @@
-from lammps.output import LammpsLog
+from pmg_lammps.output import LammpsLog
 
 
 def test_lammps_log_simple():

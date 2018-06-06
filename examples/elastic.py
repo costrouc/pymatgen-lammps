@@ -5,7 +5,7 @@ import subprocess
 from pymatgen import Structure, Lattice, Specie
 from pymatgen.analysis.elasticity import DeformedStructureSet, Strain, Stress, ElasticTensor
 
-from lammps import RelaxSet, LammpsLog, LammpsData, LammpsPotentials
+from pmg_lammps import RelaxSet, LammpsLog, LammpsData, LammpsPotentials
 
 
 supercell = (5, 5, 5)

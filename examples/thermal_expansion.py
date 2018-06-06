@@ -5,7 +5,7 @@ import subprocess
 import numpy as np
 from pymatgen import Structure, Lattice, Specie
 
-from lammps import LammpsData, NPTSet, LammpsPotentials
+from pmg_lammps import LammpsData, NPTSet, LammpsPotentials
 
 supercell = (5, 5, 5)
 a = 4.1990858 # From evaluation of potential

@@ -7,8 +7,8 @@ from functools import partial
 import numpy as np
 from pymatgen import Lattice
 
-from lammps import LammpsBox, LammpsData, NVESet
-from lammps.utils import plane_from_miller_index
+from pmg_lammps import LammpsBox, LammpsData, NVESet
+from pmg_lammps.utils import plane_from_miller_index
 from mgo import structure, lammps_potentials, mgo_potential_settings
 
 directory = 'runs/test'
