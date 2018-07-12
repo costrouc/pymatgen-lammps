@@ -21,6 +21,8 @@ class LammpsBox:
         """Create a lammps box and symetry operations to map coordinates to
         lammps box
 
+        Warning if lattice is too skewed LAMMPS will not work with
+        it. So my advice is to always prefer the conventional unit cell.
         """
         a, b, c = lattice.abc
         xlo, ylo, zlo = origin
@@ -41,8 +43,10 @@ class LammpsBox:
                                           [xy, yhi - ylo, 0],
                                           [xz, yz, zhi - zlo]], m)
         symmop = pmg.SymmOp.from_rotation_and_translation(rot_matrix, origin)
-        return cls(xlo=xlo, xhi=xhi, ylo=ylo, yhi=yhi,
-                   zlo=zlo, zhi=zhi, xy=xy, xz=xz, yz=yz), symmop
+        return cls(xlo=xlo, xhi=xhi,
+                   ylo=ylo, yhi=yhi,
+                   zlo=zlo, zhi=zhi,
+                   xy=xy, xz=xz, yz=yz), symmop
 
     @property
     def lattice(self):
