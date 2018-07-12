@@ -11,22 +11,16 @@ test:
   image: python:3.6
   stage: test
   script:
-    - echo "============== Testing Package ============="
     - python --version
     - pip install . # quieter
     - python setup.py test
-    - echo "============================================"
 
 deploy:
   stage: deploy
   image: python:3.6
   script:
     - pip install -U twine setuptools
-    - pip list
     - python setup.py sdist bdist_wheel
-    - echo "======== Deploying Package to PyPi ========="
-    - twine upload dist/*.tar.gz
-    - twine upload dist/*.whl
-    - echo "============================================"
+    - twine upload dist/*
   only:
     - /^v\d+\.\d+\.\d+([abc]\d*)?$/  # PEP-440 compliant version (tags)
