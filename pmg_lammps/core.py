@@ -1,6 +1,7 @@
 import math
 
-from pymatgen import Lattice
+import numpy as np
+import pymatgen as pmg
 
 
 class LammpsBox:
@@ -16,16 +17,32 @@ class LammpsBox:
         self.yz = yz
 
     @classmethod
-    def from_lattice(cls, lattice):
+    def from_lattice(cls, lattice, origin=(0, 0, 0)):
+        """Create a lammps box and symetry operations to map coordinates to
+        lammps box
+
+        """
         a, b, c = lattice.abc
-        alpha_rad, beta_rad, gamma_rad = list(map(math.radians, lattice.angles))
-        lx = a
-        xy = b * math.cos(gamma_rad)
-        xz = c * math.cos(beta_rad)
-        ly = math.sqrt(b**2 - xy**2)
-        yz = (b * c * math.cos(alpha_rad) - xy * xz) / ly
-        lz = math.sqrt(c**2 - xz**2 - yz**2)
-        return cls(lx, ly, lz, xy=xy, xz=xz, yz=yz)
+        xlo, ylo, zlo = origin
+        xhi = a + xlo
+        if lattice.is_orthogonal:
+            yhi = b + ylo
+            zhi = c + zlo
+            xy, xz, yz = (0, 0, 0)
+            rot_matrix = np.eye(3)
+        else:
+            m = lattice.matrix
+            xy = np.dot(m[1], m[0] / a)
+            yhi = np.sqrt(b ** 2 - xy ** 2) + ylo
+            xz = np.dot(m[2], m[0] / a)
+            yz = (np.dot(m[1], m[2]) - xy * xz) / (yhi - ylo)
+            zhi = np.sqrt(c ** 2 - xz ** 2 - yz ** 2) + zlo
+            rot_matrix = np.linalg.solve([[xhi - xlo, 0, 0],
+                                          [xy, yhi - ylo, 0],
+                                          [xz, yz, zhi - zlo]], m)
+        symmop = pmg.SymmOp.from_rotation_and_translation(rot_matrix, origin)
+        return cls(xlo=xlo, xhi=xhi, ylo=ylo, yhi=yhi,
+                   zlo=zlo, zhi=zhi, xy=xy, xz=xz, yz=yz), symmop
 
     @property
     def lattice(self):
@@ -39,7 +56,7 @@ class LammpsBox:
         alpha = math.degrees(math.acos((xy * xz + ly * yz) / (b * c)))
         beta = math.degrees(math.acos(xz / c))
         gamma = math.degrees(math.acos(xy / b))
-        return Lattice.from_parameters(a, b, c, alpha, beta, gamma)
+        return pmg.Lattice.from_parameters(a, b, c, alpha, beta, gamma)
 
     def as_dict(self):
         return {

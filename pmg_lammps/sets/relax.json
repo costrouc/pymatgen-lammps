@@ -5,6 +5,7 @@
     "boundary": "p p p",
     "atom_style": "full",
     "pair_style": "lj/cut/coul/long 12",
+    "read_data": "initial.data",
     "kspace_style": "pppm 0.0001",
     "pair_modify": [
         "tail yes",
@@ -15,7 +16,6 @@
     "angle_style": "harmonic",
     "dihedral_style": "charmm",
     "improper_style": "cvff",
-    "read_data": "initial.data",
     "pair_coeff": [],
     "set": [],
     "region": [],

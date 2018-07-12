@@ -21,8 +21,8 @@ initial_structure = structure * supercell
 directory = 'runs/elastic'
 num_normal = 10
 num_shear = 10
-max_normal = 0.02
-max_shear = 0.05
+max_normal = 0.03
+max_shear = 0.08
 
 lammps_potentials = LammpsPotentials(pair={
     (mg, mg): '1309362.2766468062  0.104    0.0',
@@ -64,7 +64,7 @@ for i, deformation in enumerate(deformation_set.deformations):
 
 strains = [defo['strain'] for defo in strained_structures]
 stresses = [defo['stress'] for defo in strained_structures]
-elastic = ElasticTensor.from_strain_stress_list(strains, stresses)
+elastic = ElasticTensor.from_pseudoinverse(strains, stresses)
 
 print('Stiffness Tensor')
 for row in elastic.voigt:

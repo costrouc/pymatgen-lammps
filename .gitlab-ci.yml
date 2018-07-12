@@ -7,7 +7,7 @@ stages:
   - test
   - deploy
 
-unittest:
+test:
   image: python:3.6
   stage: test
   script:
