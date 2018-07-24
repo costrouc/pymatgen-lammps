@@ -2,6 +2,8 @@ variables:
   TWINE_USERNAME: SECURE
   TWINE_PASSWORD: SECURE
   TWINE_REPOSITORY_URL: https://upload.pypi.org/legacy/
+  ANACONDA_USERNAME: SECURE
+  ANACONDA_TOKEN: SECURE
 
 stages:
   - test
@@ -15,12 +17,21 @@ test:
     - pip install . # quieter
     - python setup.py test
 
-deploy:
+deploy_pypi:
   stage: deploy
   image: python:3.6
   script:
     - pip install -U twine setuptools
     - python setup.py sdist bdist_wheel
     - twine upload dist/*
+  only:
+    - /^v\d+\.\d+\.\d+([abc]\d*)?$/  # PEP-440 compliant version (tags)
+
+deploy_conda:
+  stage: deploy
+  image: continuumio/miniconda3:latest
+  script:
+    - conda install conda-build anaconda-client -y
+    - conda build --channel=matsci --user $ANACONDA_USERNAME --token $ANACONDA_TOKEN .conda/pymatgen-lammps
   only:
     - /^v\d+\.\d+\.\d+([abc]\d*)?$/  # PEP-440 compliant version (tags)

@@ -1,0 +1,47 @@
+{% set build = 0 %}
+{% set version = 'v0.4.3' %}
+
+package:
+  name: pymatgen-lammps
+  version: {{ version }}
+
+source:
+  git_url: ../../
+
+build:
+  noarch: python
+
+requirements:
+  build:
+    - python
+    - setuptools >=38.6.0
+    - pytest-runner
+    - pymatgen
+  run:
+    - python
+    - numpy
+    - pymatgen
+
+test: {}
+
+about:
+  home: https://gitlab.com/costrouc/pymatgen-lammps
+  license: MIT
+  license_family: MIT
+  license_file: LICENSE
+  summary: 'A LAMMPS wrapper using pymatgen'
+  description: |
+    This is a package that I wrote to write input files for LAMMPS and
+    analyze them because I was not happy with the one built inside of
+    `pymatgen`. It has built in calculators for running many lammps
+    calculations in parallel (many short small LAMMPS calculations).
+
+    Now that I have put some serious effort into my cython wrapper to
+    LAMMPS. I would recommend it instead. You get significantly better
+    performance and LAMMPS is now built into the python
+    process. [lammps-cython](https://gitlab.com/costrouc/lammps-cython).
+  dev_url: https://gitlab.com/costrouc/pymatgen-lammps
+
+extra:
+  recipe-maintainers:
+    - costrouc
