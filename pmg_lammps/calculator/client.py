@@ -5,7 +5,6 @@ import pickle
 import uuid
 import logging
 
-from zmq_legos.mdp import Client as MDPClient
 
 from .process import LammpsProcess
 
@@ -55,6 +54,8 @@ class LammpsLocalClient:
 
 class LammpsDistributedClient:
     def __init__(self, scheduler, loop=None):
+        from zmq_legos.mdp import Client as MDPClient
+
         parsed = urllib.parse.urlparse(scheduler)
         self.mdp_client = MDPClient(protocol=parsed.scheme, port=parsed.port, hostname=parsed.hostname, loop=loop)
         self.logger = logging.getLogger(f'{self.__module__}.{self.__class__.__name__}')

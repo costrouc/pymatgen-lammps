@@ -30,9 +30,11 @@ setup(
     packages=find_packages(exclude=['docs', 'tests', 'notebooks']),
     install_requires=[
         'pymatgen==2017.7.4',
-        'zmq_legos',
     ],
     setup_requires=['pytest-runner', 'setuptools>=38.6.0'],  # >38.6.0 needed for markdown README.md
+    extras_require={
+        'zmq_legos': 'zmq_legos'
+    },
     tests_require=['pytest'],
     package_data={'pmg_lammps': ['sets/*.json']},
     entry_points={

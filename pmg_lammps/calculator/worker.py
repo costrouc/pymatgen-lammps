@@ -3,13 +3,13 @@ import asyncio
 import multiprocessing
 import logging
 
-from zmq_legos.mdp import Worker as MDPWorker
-
 from .process import LammpsProcess
 
 
 class LammpsWorker:
     def __init__(self, stop_event, scheduler, command=None, num_workers=None, loop=None):
+        from zmq_legos.mdp import Worker as MDPWorker
+
         self.logger = logging.getLogger(f'{self.__module__}.{self.__class__.__name__}')
         self.command = command
         self.num_workers = num_workers or multiprocessing.cpu_count()
