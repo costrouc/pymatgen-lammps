@@ -10,7 +10,7 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-version = '0.4.4'
+version = '0.4.5'
 setup(
     name='pymatgen-lammps',
     version=version,
@@ -28,9 +28,7 @@ setup(
     keywords='lammps pymatgen wrapper',
     download_url='https://gitlab.com/costrouc/pymatgen-lammps/repository/archive.zip?ref=v%s' % version,
     packages=find_packages(exclude=['docs', 'tests', 'notebooks']),
-    install_requires=[
-        'pymatgen==2017.7.4',
-    ],
+    install_requires=['pymatgen'],
     setup_requires=['pytest-runner', 'setuptools>=38.6.0'],  # >38.6.0 needed for markdown README.md
     extras_require={
         'zmq_legos': 'zmq_legos'
