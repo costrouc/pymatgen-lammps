@@ -98,3 +98,6 @@ ENV/
 
 # pytest cache ignore
 .pytest_cache
+
+# nix
+result
