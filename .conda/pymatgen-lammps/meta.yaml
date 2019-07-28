@@ -25,7 +25,7 @@ requirements:
 test: {}
 
 about:
-  home: https://gitlab.com/costrouc/pymatgen-lammps
+  home: https://github.com/costrouc/pymatgen-lammps
   license: MIT
   license_family: MIT
   license_file: LICENSE
@@ -39,8 +39,8 @@ about:
     Now that I have put some serious effort into my cython wrapper to
     LAMMPS. I would recommend it instead. You get significantly better
     performance and LAMMPS is now built into the python
-    process. [lammps-cython](https://gitlab.com/costrouc/lammps-cython).
-  dev_url: https://gitlab.com/costrouc/pymatgen-lammps
+    process. [lammps-cython](https://github.com/costrouc/lammps-cython).
+  dev_url: https://github.com/costrouc/pymatgen-lammps
 
 extra:
   recipe-maintainers:

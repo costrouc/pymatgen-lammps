@@ -1,0 +1,10 @@
+language: nix
+script: nix-build release.nix -A pymatgen-lammps
+
+deploy:
+ - provider: pypi
+   user: costrouc
+   password: $PYPI_PASSWORD
+   distributions: "sdist"
+   on:
+     tags: true

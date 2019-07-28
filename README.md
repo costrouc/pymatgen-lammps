@@ -8,4 +8,4 @@ calculations in parallel (many short small LAMMPS calculations).
 Now that I have put some serious effort into my cython wrapper to
 LAMMPS. I would recommend it instead. You get significantly better
 performance and LAMMPS is now built into the python
-process. [lammps-cython](https://gitlab.com/costrouc/lammps-cython).
+process. [lammps-cython](https://github.com/costrouc/lammps-cython).
