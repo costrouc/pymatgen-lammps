@@ -2,8 +2,8 @@ import os
 from collections import OrderedDict
 
 import pymatgen as pmg
-from pymatgen.core import Specie, Element, Structure
-from pymatgen.core.periodic_table import _pt_data as periodic_table
+from pymatgen.core.structure import Element, Structure
+from pymatgen.core.periodic_table import Specie, _pt_data as periodic_table
 import numpy as np
 
 from .core import LammpsBox, LammpsPotentials
